@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
-import axios from "axios"
+import api from "../api"
 import AppLayout from "../components/AppLayout"
-
-const API = "http://localhost:8000"
 
 const statusStyles = {
   "To Do": "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700",
@@ -25,10 +23,10 @@ function Dashboard({ theme, toggleTheme }) {
       try {
 
         const [tasksRes, projectsRes, teamRes, workspaceRes] = await Promise.all([
-          axios.get(`${API}/tasks`),
-          axios.get(`${API}/projects`),
-          axios.get(`${API}/team`),
-          axios.get(`${API}/workspace`)
+          api.get("/tasks"),
+          api.get("/projects"),
+          api.get("/team"),
+          api.get("/workspace")
         ])
 
         setTasks(tasksRes.data)

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
-import axios from "axios"
+import api from "../api"
 import { ThemeToggle } from "../components/AppLayout"
 
 function Login({ theme, toggleTheme }) {
@@ -14,14 +14,15 @@ function Login({ theme, toggleTheme }) {
 
     try {
 
-      const res = await axios.post(
-        "http://localhost:8000/login",
+      const res = await api.post(
+        "/login",
         {
           email,
           password
         }
       )
 
+      localStorage.setItem("authToken", res.data.token)
       localStorage.setItem("user", JSON.stringify(res.data.user))
 
       navigate("/dashboard")
@@ -49,7 +50,7 @@ function Login({ theme, toggleTheme }) {
       <div className="bg-white p-8 rounded-md shadow-sm w-[360px] border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
 
         <h1 className="text-3xl font-semibold text-slate-950 text-center dark:text-slate-50">
-          Welcome Back
+          Welcome to TaskGrid
         </h1>
 
         <p className="text-slate-500 text-center mt-2 text-sm dark:text-slate-400">

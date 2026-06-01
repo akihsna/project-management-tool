@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
-import axios from "axios"
+import api from "../api"
 import AppLayout from "../components/AppLayout"
 
-const API_URL = "http://localhost:8000/projects"
+const API_URL = "/projects"
 
 const emptyProject = {
   name: "",
@@ -21,7 +21,7 @@ function Projects({ theme, toggleTheme }) {
 
     try {
 
-      const res = await axios.get(API_URL)
+      const res = await api.get(API_URL)
 
       setProjects(res.data)
 
@@ -69,7 +69,7 @@ function Projects({ theme, toggleTheme }) {
 
     try {
 
-      const res = await axios.post(API_URL, formData)
+      const res = await api.post(API_URL, formData)
 
       setProjects([res.data, ...projects])
       setFormData(emptyProject)
@@ -90,7 +90,7 @@ function Projects({ theme, toggleTheme }) {
 
     try {
 
-      const res = await axios.put(`${API_URL}/${projectId}`, {
+      const res = await api.put(`${API_URL}/${projectId}`, {
         status
       })
 
@@ -114,7 +114,7 @@ function Projects({ theme, toggleTheme }) {
 
     try {
 
-      await axios.delete(`${API_URL}/${projectId}`)
+      await api.delete(`${API_URL}/${projectId}`)
 
       setProjects(projects.filter((project) => project._id !== projectId))
 

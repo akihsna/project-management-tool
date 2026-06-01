@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react"
-import axios from "axios"
+import api from "../api"
 import AppLayout from "../components/AppLayout"
-
-const API = "http://localhost:8000"
 
 const emptyTask = {
   title: "",
@@ -32,9 +30,9 @@ function Tasks({ theme, toggleTheme }) {
     try {
 
       const [tasksRes, projectsRes, teamRes] = await Promise.all([
-        axios.get(`${API}/tasks`),
-        axios.get(`${API}/projects`),
-        axios.get(`${API}/team`)
+        api.get("/tasks"),
+        api.get("/projects"),
+        api.get("/team")
       ])
 
       setTasks(tasksRes.data)
@@ -85,7 +83,7 @@ function Tasks({ theme, toggleTheme }) {
 
     try {
 
-      const res = await axios.post(`${API}/tasks`, formData)
+      const res = await api.post("/tasks", formData)
 
       setTasks([res.data, ...tasks])
       setFormData(emptyTask)
@@ -106,7 +104,7 @@ function Tasks({ theme, toggleTheme }) {
 
     try {
 
-      const res = await axios.put(`${API}/tasks/${taskId}`, {
+      const res = await api.put(`/tasks/${taskId}`, {
         status
       })
 
@@ -130,7 +128,7 @@ function Tasks({ theme, toggleTheme }) {
 
     try {
 
-      await axios.delete(`${API}/tasks/${taskId}`)
+      await api.delete(`/tasks/${taskId}`)
 
       setTasks(tasks.filter((task) => task._id !== taskId))
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
-import axios from "axios"
+import api from "../api"
 import AppLayout from "../components/AppLayout"
 
-const API_URL = "http://localhost:8000/team"
+const API_URL = "/team"
 
 const emptyMember = {
   name: "",
@@ -20,7 +20,7 @@ function Team({ theme, toggleTheme }) {
 
     try {
 
-      const res = await axios.get(API_URL)
+      const res = await api.get(API_URL)
 
       setMembers(res.data)
 
@@ -68,7 +68,7 @@ function Team({ theme, toggleTheme }) {
 
     try {
 
-      const res = await axios.post(API_URL, formData)
+      const res = await api.post(API_URL, formData)
 
       setMembers([res.data, ...members])
       setFormData(emptyMember)
@@ -89,7 +89,7 @@ function Team({ theme, toggleTheme }) {
 
     try {
 
-      await axios.delete(`${API_URL}/${memberId}`)
+      await api.delete(`${API_URL}/${memberId}`)
 
       setMembers(members.filter((member) => member._id !== memberId))
 

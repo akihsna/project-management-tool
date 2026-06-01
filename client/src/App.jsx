@@ -11,8 +11,9 @@ import Team from "./pages/Team"
 function ProtectedRoute({ children }) {
 
   const user = localStorage.getItem("user")
+  const authToken = localStorage.getItem("authToken")
 
-  if (!user) {
+  if (!user || !authToken) {
     return <Navigate to="/" replace />
   }
 

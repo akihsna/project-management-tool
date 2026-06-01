@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom"
+import api from "../api"
 
 export function ThemeToggle({ theme, toggleTheme }) {
 
@@ -53,8 +54,16 @@ function AppLayout({ children, title, kicker, theme, toggleTheme }) {
   const navigate = useNavigate()
   const user = JSON.parse(localStorage.getItem("user") || "null")
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
 
+    try {
+      await api.post("/logout")
+    }
+    catch (error) {
+      console.log(error)
+    }
+
+    localStorage.removeItem("authToken")
     localStorage.removeItem("user")
 
     navigate("/")
@@ -77,7 +86,7 @@ function AppLayout({ children, title, kicker, theme, toggleTheme }) {
         <div className="mb-7">
 
           <h1 className="text-lg font-semibold text-slate-950 dark:text-slate-50">
-            PM Tool
+            TaskGrid
           </h1>
 
           <p className="text-xs text-slate-500 mt-1 dark:text-slate-400">

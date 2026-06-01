@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
-import axios from "axios"
+import api from "../api"
 import AppLayout from "../components/AppLayout"
 
-const API_URL = "http://localhost:8000/workspace"
+const API_URL = "/workspace"
 
 const emptyWorkspace = {
   name: "Project Hub",
@@ -23,7 +23,7 @@ function Workspace({ theme, toggleTheme }) {
 
       try {
 
-        const res = await axios.get(API_URL)
+        const res = await api.get(API_URL)
 
         if (res.data) {
           setWorkspace(res.data)
@@ -78,8 +78,8 @@ function Workspace({ theme, toggleTheme }) {
     try {
 
       const res = workspace
-        ? await axios.put(`${API_URL}/${workspace._id}`, formData)
-        : await axios.post(API_URL, formData)
+        ? await api.put(`${API_URL}/${workspace._id}`, formData)
+        : await api.post(API_URL, formData)
 
       setWorkspace(res.data)
 

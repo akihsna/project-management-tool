@@ -4,6 +4,7 @@ const express = require("express")
 const cors = require("cors")
 const mongoose = require("mongoose")
 const bcrypt = require("bcryptjs")
+const crypto = require("crypto")
 const User = require("./models/User")
 const Task = require("./models/Task")
 const Project = require("./models/Project")
@@ -16,6 +17,57 @@ const MONGO_URI = process.env.MONGO_URI
 
 app.use(cors())
 app.use(express.json())
+
+const hashToken = (token) => {
+  return crypto.createHash("sha256").update(token).digest("hex")
+}
+
+const definedFields = (fields) => {
+  return Object.fromEntries(
+    Object.entries(fields).filter(([, value]) => value !== undefined)
+  )
+}
+
+const requireAuth = async (req, res, next) => {
+
+  try {
+
+    const authorization = req.get("authorization") || ""
+    const [type, token] = authorization.split(" ")
+
+    if (type !== "Bearer" || !token) {
+      return res.status(401).json({
+        message: "Please log in to continue"
+      })
+    }
+
+    const user = await User.findOne({
+      authTokenHash: hashToken(token)
+    }).select("+authTokenHash")
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Your session has expired. Please log in again"
+      })
+    }
+
+    req.user = user
+
+    next()
+
+  }
+
+  catch (error) {
+
+    console.log(error)
+
+    res.status(500).json({
+      message: "Failed to authenticate request"
+    })
+
+  }
+
+}
 
 app.get("/", (req, res) => {
   res.send("Server Running")
@@ -115,8 +167,14 @@ app.post("/login", async (req, res) => {
       })
     }
 
+    const token = crypto.randomBytes(32).toString("hex")
+
+    user.authTokenHash = hashToken(token)
+    await user.save()
+
     res.json({
       message: "Login Successful",
+      token,
       user: {
         id: user._id,
         name: user.name,
@@ -138,11 +196,38 @@ app.post("/login", async (req, res) => {
 
 })
 
+app.post("/logout", requireAuth, async (req, res) => {
+
+  try {
+
+    req.user.authTokenHash = undefined
+    await req.user.save()
+
+    res.json({
+      message: "Logout Successful"
+    })
+
+  }
+
+  catch (error) {
+
+    console.log(error)
+
+    res.status(500).json({
+      message: "Logout Failed"
+    })
+
+  }
+
+})
+
+app.use(requireAuth)
+
 app.get("/tasks", async (req, res) => {
 
   try {
 
-    const tasks = await Task.find().sort({ createdAt: -1 })
+    const tasks = await Task.find({ owner: req.user._id }).sort({ createdAt: -1 })
 
     res.json(tasks)
 
@@ -173,6 +258,7 @@ app.post("/tasks", async (req, res) => {
     }
 
     const task = await Task.create({
+      owner: req.user._id,
       title,
       description,
       status,
@@ -201,9 +287,21 @@ app.put("/tasks/:id", async (req, res) => {
 
   try {
 
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
-      req.body,
+    const { title, description, status, priority, project, assignee } = req.body
+
+    const task = await Task.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        owner: req.user._id
+      },
+      definedFields({
+        title,
+        description,
+        status,
+        priority,
+        project,
+        assignee
+      }),
       {
         new: true,
         runValidators: true
@@ -236,7 +334,10 @@ app.delete("/tasks/:id", async (req, res) => {
 
   try {
 
-    const task = await Task.findByIdAndDelete(req.params.id)
+    const task = await Task.findOneAndDelete({
+      _id: req.params.id,
+      owner: req.user._id
+    })
 
     if (!task) {
       return res.status(404).json({
@@ -266,7 +367,7 @@ app.get("/projects", async (req, res) => {
 
   try {
 
-    const projects = await Project.find().sort({ createdAt: -1 })
+    const projects = await Project.find({ owner: req.user._id }).sort({ createdAt: -1 })
 
     res.json(projects)
 
@@ -297,6 +398,7 @@ app.post("/projects", async (req, res) => {
     }
 
     const project = await Project.create({
+      owner: req.user._id,
       name,
       key,
       description,
@@ -323,9 +425,19 @@ app.put("/projects/:id", async (req, res) => {
 
   try {
 
-    const project = await Project.findByIdAndUpdate(
-      req.params.id,
-      req.body,
+    const { name, key, description, status } = req.body
+
+    const project = await Project.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        owner: req.user._id
+      },
+      definedFields({
+        name,
+        key,
+        description,
+        status
+      }),
       {
         new: true,
         runValidators: true
@@ -358,7 +470,10 @@ app.delete("/projects/:id", async (req, res) => {
 
   try {
 
-    const project = await Project.findByIdAndDelete(req.params.id)
+    const project = await Project.findOneAndDelete({
+      _id: req.params.id,
+      owner: req.user._id
+    })
 
     if (!project) {
       return res.status(404).json({
@@ -388,7 +503,7 @@ app.get("/team", async (req, res) => {
 
   try {
 
-    const members = await TeamMember.find().sort({ createdAt: -1 })
+    const members = await TeamMember.find({ owner: req.user._id }).sort({ createdAt: -1 })
 
     res.json(members)
 
@@ -419,6 +534,7 @@ app.post("/team", async (req, res) => {
     }
 
     const member = await TeamMember.create({
+      owner: req.user._id,
       name,
       email,
       role
@@ -444,7 +560,10 @@ app.delete("/team/:id", async (req, res) => {
 
   try {
 
-    const member = await TeamMember.findByIdAndDelete(req.params.id)
+    const member = await TeamMember.findOneAndDelete({
+      _id: req.params.id,
+      owner: req.user._id
+    })
 
     if (!member) {
       return res.status(404).json({
@@ -474,7 +593,7 @@ app.get("/workspace", async (req, res) => {
 
   try {
 
-    const workspace = await Workspace.findOne().sort({ createdAt: -1 })
+    const workspace = await Workspace.findOne({ owner: req.user._id })
 
     res.json(workspace)
 
@@ -496,7 +615,25 @@ app.post("/workspace", async (req, res) => {
 
   try {
 
-    const workspace = await Workspace.create(req.body)
+    const existingWorkspace = await Workspace.findOne({
+      owner: req.user._id
+    })
+
+    if (existingWorkspace) {
+      return res.status(409).json({
+        message: "Workspace already exists"
+      })
+    }
+
+    const { name, description, agileMethod, sprintLength } = req.body
+
+    const workspace = await Workspace.create({
+      owner: req.user._id,
+      name,
+      description,
+      agileMethod,
+      sprintLength
+    })
 
     res.status(201).json(workspace)
 
@@ -518,9 +655,19 @@ app.put("/workspace/:id", async (req, res) => {
 
   try {
 
-    const workspace = await Workspace.findByIdAndUpdate(
-      req.params.id,
-      req.body,
+    const { name, description, agileMethod, sprintLength } = req.body
+
+    const workspace = await Workspace.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        owner: req.user._id
+      },
+      definedFields({
+        name,
+        description,
+        agileMethod,
+        sprintLength
+      }),
       {
         new: true,
         runValidators: true
