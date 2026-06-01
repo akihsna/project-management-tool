@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
-import axios from "axios"
+import api from "../api"
 import { ThemeToggle } from "../components/AppLayout"
 
 function Signup({ theme, toggleTheme }) {
@@ -21,8 +21,8 @@ function Signup({ theme, toggleTheme }) {
         password
       }
 
-      const res = await axios.post(
-        "http://localhost:8000/signup",
+      const res = await api.post(
+        "/signup",
         userData
       )
 

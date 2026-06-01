@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: taskgrid
+    runtime: node
+    plan: free
+    buildCommand: npm install --prefix server && npm install --prefix client && npm run build --prefix client
+    startCommand: npm start --prefix server
+    healthCheckPath: /health
+    envVars:
+      - key: MONGO_URI
+        sync: false

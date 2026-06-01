@@ -5,6 +5,7 @@ const cors = require("cors")
 const mongoose = require("mongoose")
 const bcrypt = require("bcryptjs")
 const crypto = require("crypto")
+const path = require("path")
 const User = require("./models/User")
 const Task = require("./models/Task")
 const Project = require("./models/Project")
@@ -14,6 +15,7 @@ const Workspace = require("./models/Workspace")
 const app = express()
 const PORT = process.env.PORT || 8000
 const MONGO_URI = process.env.MONGO_URI
+const CLIENT_DIST = path.join(__dirname, "../client/dist")
 
 app.use(cors())
 app.use(express.json())
@@ -69,7 +71,7 @@ const requireAuth = async (req, res, next) => {
 
 }
 
-app.get("/", (req, res) => {
+app.get("/health", (req, res) => {
   res.send("Server Running")
 })
 
@@ -221,7 +223,7 @@ app.post("/logout", requireAuth, async (req, res) => {
 
 })
 
-app.use(requireAuth)
+app.use(["/tasks", "/projects", "/team", "/workspace"], requireAuth)
 
 app.get("/tasks", async (req, res) => {
 
@@ -695,6 +697,20 @@ app.put("/workspace/:id", async (req, res) => {
   }
 
 })
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(CLIENT_DIST))
+
+  app.use((req, res, next) => {
+
+    if (req.method === "GET" && req.accepts("html")) {
+      return res.sendFile(path.join(CLIENT_DIST, "index.html"))
+    }
+
+    next()
+
+  })
+}
 
 const startServer = async () => {
 

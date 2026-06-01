@@ -142,6 +142,19 @@ http://localhost:5173
 
 Open the frontend URL in your browser.
 
+## Deploying On Render
+
+This repository includes a `render.yaml` Blueprint that deploys the Express API
+and the built React frontend as one Render web service.
+
+1. Push the latest code to GitHub.
+2. Open the Render Blueprint setup page for this repository.
+3. Enter the same `MONGO_URI` value used in `server/.env`.
+4. Create the Blueprint and wait for the deploy to finish.
+
+Render will provide a public `onrender.com` URL and automatically redeploy the
+website whenever the connected GitHub branch is updated.
+
 ## Important Note
 
 Do not run `npm run dev` from the main project folder because there is no root `package.json`.
